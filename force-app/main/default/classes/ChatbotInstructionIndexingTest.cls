@@ -15,10 +15,13 @@
 public class ChatbotInstructionIndexingTest {
 
     // ── Helper: create an instruction with optional index ──────────
+    // Sets Always_Include__c = true to satisfy the org's validation rule
+    // that requires Usage__c when Always_Include__c is unchecked.
     private static Chatbot_Instruction__c makeInstruction(String name, Decimal idx) {
         return new Chatbot_Instruction__c(
             Name = name,
-            Index__c = idx
+            Index__c = idx,
+            Always_Include__c = true
         );
     }
 
