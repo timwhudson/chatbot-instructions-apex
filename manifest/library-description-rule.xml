@@ -15,10 +15,6 @@
         <name>ValidationRule</name>
     </types>
     <types>
-        <members>Chatbot_Instruction__c-Chatbot Instruction Layout</members>
-        <name>Layout</name>
-    </types>
-    <types>
         <members>ChatbotInstructionLibraryRuleTest</members>
         <members>ChatbotInstructionRestrictionTest</members>
         <name>ApexClass</name>
