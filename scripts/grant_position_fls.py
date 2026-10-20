@@ -108,14 +108,21 @@ def fls_rows(fields):
 
 # ── Step 1: the fields must exist (i.e. the metadata deploy happened) ─
 def deployed_fields():
-    # FieldDefinition is metadata, so it lists a field even before anyone has
-    # FLS on it (a describe would hide it).
-    names = ",".join(f"'{f.split('.')[1]}'" for f in NEW_FIELDS)
-    rows = soql(
-        "SELECT QualifiedApiName FROM FieldDefinition WHERE "
-        f"EntityDefinition.QualifiedApiName = '{OBJ}' AND QualifiedApiName IN ({names})"
-    )
-    return {f"{OBJ}.{r['QualifiedApiName']}" for r in rows}
+    # Tooling CustomField lists a deployed field even before anyone has FLS on it.
+    # (FieldDefinition does NOT: right after the 10-20 deploy it returned 0 rows for
+    # both fields while the admin running this script had no FLS yet.)
+    names = ",".join(f"'{f.split('.')[1].removesuffix('__c')}'" for f in NEW_FIELDS)
+    out = subprocess.run(
+        ["sf", "data", "query", "-o", ORG, "--use-tooling-api", "--json", "-q",
+         "SELECT DeveloperName, TableEnumOrId FROM CustomField "
+         f"WHERE DeveloperName IN ({names})"],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    rows = json.loads(out)["result"]["records"]
+    # TableEnumOrId is the object's Id for a custom object; resolve ours to compare.
+    obj_id = soql(f"SELECT DurableId FROM EntityDefinition WHERE QualifiedApiName = '{OBJ}'")[0]["DurableId"]
+    # DurableId is the 15-character form of the 18-character TableEnumOrId.
+    return {f"{OBJ}.{r['DeveloperName']}__c" for r in rows if r["TableEnumOrId"][:15] == obj_id[:15]}
 
 
 # ── Step 2: build the plan from the source field's rows ──────────────
