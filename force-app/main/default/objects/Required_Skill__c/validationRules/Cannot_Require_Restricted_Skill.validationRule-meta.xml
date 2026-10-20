@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cannot_Require_Restricted_Skill</fullName>
+    <active>true</active>
+    <description>Position-restricted skills: a firm skill can&apos;t require a restricted skill. The reverse (restricting a skill that is already required) is blocked by Apex in ChatbotInstructionTrigger.</description>
+    <errorConditionFormula>Required_Instruction__r.Is_Position_Restricted__c</errorConditionFormula>
+    <errorDisplayField>Required_Instruction__c</errorDisplayField>
+    <errorMessage>A skill can&apos;t require a position-restricted skill.</errorMessage>
+</ValidationRule>

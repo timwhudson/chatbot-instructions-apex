@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Position_Restricted__c</fullName>
+    <description>Position-restricted skills: TRUE when Restricted to Positions (Allowed_Positions__c) is filled. Exists so validation rules on other records can read the restriction across a lookup (Required_Skill__c.Required_Instruction__r, Chatbot_Instruction__c.Instruction_Dependency__r) without touching the multi-select picklist directly.</description>
+    <formula>NOT(ISBLANK(Allowed_Positions__c))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Ticked automatically when Restricted to Positions is filled.</inlineHelpText>
+    <label>Is Position Restricted</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

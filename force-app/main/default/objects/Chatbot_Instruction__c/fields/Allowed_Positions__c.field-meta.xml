@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Allowed_Positions__c</fullName>
+    <description>Position-restricted skills: empty = every staff member can see and use this skill. Filled = only staff whose Contact.Current_Position__c is one of these values can see it (Library, @ list, Required picker) or receive it (router, @ mention, load_skill/search_skills, subagents). Shares the TCCFO_Positions global value set with Contact.Current_Position__c, so renamed/added positions appear in both (rename with &quot;Replace&quot;, not an API-name edit). Read by the LiteLLM proxy within 10 minutes. A restricted skill must be a plain text skill (validation rule Restricted_Skill_Must_Be_Plain_Text) and no other firm skill may require it (Apex in ChatbotInstructionTrigger + validation rules).</description>
+    <inlineHelpText>Leave empty for everyone. Pick positions to limit who can see and use this skill.</inlineHelpText>
+    <label>Restricted to Positions</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetName>TCCFO_Positions</valueSetName>
+    </valueSet>
+    <visibleLines>8</visibleLines>
+</CustomField>

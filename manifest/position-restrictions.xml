@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Position-restricted skills: the exact set of components to deploy.
+  Deploy by THIS manifest, never by source dir: a source-dir deploy would also push
+  the whole CustomObject definition and the indexing service, which this change
+  doesn't need to touch.
+  The Layout REPLACES the live layout wholesale: it was copied from live on
+  2026-10-20 (rollback copy: skill-library-2026-10-17/sf/rollback/layout.live-2026-10-20.xml)
+  plus one added field. Re-diff against live right before the real deploy.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Chatbot_Instruction__c.Allowed_Positions__c</members>
+        <members>Chatbot_Instruction__c.Is_Position_Restricted__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c.Cannot_Depend_On_Restricted_Skill</members>
+        <members>Chatbot_Instruction__c.Restricted_Skill_Must_Be_Plain_Text</members>
+        <members>Required_Skill__c.Cannot_Require_Restricted_Skill</members>
+        <name>ValidationRule</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c-Chatbot Instruction Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>ChatbotInstructionIndexingTest</members>
+        <members>ChatbotInstructionRestrictionGuard</members>
+        <members>ChatbotInstructionRestrictionTest</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>ChatbotInstructionTrigger</members>
+        <name>ApexTrigger</name>
+    </types>
+    <version>65.0</version>
+</Package>

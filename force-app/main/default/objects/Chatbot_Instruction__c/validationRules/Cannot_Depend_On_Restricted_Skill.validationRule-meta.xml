@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cannot_Depend_On_Restricted_Skill</fullName>
+    <active>true</active>
+    <description>Position-restricted skills: the legacy Instruction Dependency can&apos;t point at a restricted skill. Only on new records or a changed lookup, so the re-index trigger&apos;s sibling updates never trip it.</description>
+    <errorConditionFormula>AND(OR(ISNEW(), ISCHANGED(Instruction_Dependency__c)), Instruction_Dependency__r.Is_Position_Restricted__c)</errorConditionFormula>
+    <errorDisplayField>Instruction_Dependency__c</errorDisplayField>
+    <errorMessage>A skill can&apos;t depend on a position-restricted skill.</errorMessage>
+</ValidationRule>

@@ -10,8 +10,12 @@
  *   - Deleting a record closes the gap automatically
  *   - Inserting at an existing position shifts other records down
  *
- * Delegates all logic to ChatbotInstructionIndexingService to keep
- * the trigger lean and testable.
+ * Also (position-restricted skills): before update, refuses to restrict a
+ * skill (fill Allowed_Positions__c) while another firm skill requires it.
+ * See ChatbotInstructionRestrictionGuard.
+ *
+ * Delegates all logic to ChatbotInstructionIndexingService and
+ * ChatbotInstructionRestrictionGuard to keep the trigger lean and testable.
  */
 trigger ChatbotInstructionTrigger on Chatbot_Instruction__c (
     before insert, before update, after insert, after update, after delete
@@ -29,6 +33,8 @@ trigger ChatbotInstructionTrigger on Chatbot_Instruction__c (
 
     if (Trigger.isBefore && Trigger.isUpdate) {
         ChatbotInstructionIndexingService.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
+        // Position-restricted skills: block restricting a skill that is still required
+        ChatbotInstructionRestrictionGuard.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
     }
 
     // ── AFTER events: rebuild the full sequence ─────────────────────

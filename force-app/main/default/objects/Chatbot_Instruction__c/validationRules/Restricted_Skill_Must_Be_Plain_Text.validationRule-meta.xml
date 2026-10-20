@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Restricted_Skill_Must_Be_Plain_Text</fullName>
+    <active>true</active>
+    <description>Position-restricted skills: only a plain text skill can be restricted. Always Include and Proxy Injected load for everyone, and a Packaged Skill ID puts the files in every sandbox.</description>
+    <errorConditionFormula>AND(NOT(ISBLANK(Allowed_Positions__c)), OR(Always_Include__c, Proxy_Injected_Instruction__c, NOT(ISBLANK(Anthropic_Skill_ID__c))))</errorConditionFormula>
+    <errorDisplayField>Allowed_Positions__c</errorDisplayField>
+    <errorMessage>Only a plain text skill can be restricted to positions: untick Always Include and Proxy Injected, and clear Packaged Skill ID.</errorMessage>
+</ValidationRule>
