@@ -14,6 +14,8 @@ WHAT IT PRINTS (never credentials, emails, names or record content):
      that filters on the formula. Before the metadata deploy + FLS grant these
      read "absent" / 400 (expected); after, they must read "visible" / 200
      BEFORE the proxy code that selects them ships.
+EXIT CODE: 1 if any field is absent or any call is not HTTP 200 (so before the
+deploy + FLS grant it exits 1 on purpose), 0 only when everything is readable.
 
 RUN from the cfo-bot-litellm repo root (it imports the proxy's own helper), with
 the proxy's Salesforce env injected by Railway; filter the output as a belt:
@@ -32,6 +34,8 @@ sys.path.insert(0, os.getcwd())
 from callbacks.skills.salesforce import SF_API_VERSION, _authed_request  # noqa: E402
 
 BASE = f"/services/data/{SF_API_VERSION}"
+# Each failed check appends a short reason; any entry means exit code 1.
+FAILURES = []
 
 
 async def visible_fields(sobject, wanted):
@@ -39,6 +43,7 @@ async def visible_fields(sobject, wanted):
     response = await _authed_request("GET", f"{BASE}/sobjects/{sobject}/describe")
     if response.status_code != 200:
         print(f"{sobject} describe: HTTP {response.status_code}")
+        FAILURES.append(f"{sobject} describe HTTP {response.status_code}")
         return
     fields = {f["name"]: f for f in response.json().get("fields", [])}
     for name in wanted:
@@ -46,6 +51,8 @@ async def visible_fields(sobject, wanted):
         state = "visible (readable)" if field else "absent (no field or no FLS)"
         detail = f", type={field.get('type')}" if field else ""
         print(f"  {sobject}.{name}: {state}{detail}")
+        if not field:
+            FAILURES.append(f"{sobject}.{name} absent")
 
 
 async def count(soql):
@@ -57,6 +64,7 @@ async def count(soql):
     else:
         # The error body names fields, not data; still keep it short.
         print(f"  HTTP {response.status_code}: {response.text[:160]}")
+        FAILURES.append(f"query HTTP {response.status_code}")
 
 
 async def main():
@@ -80,3 +88,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    if FAILURES:
+        print(f"FAIL ({len(FAILURES)}): " + "; ".join(FAILURES))
+        sys.exit(1)
+    print("PASS: every field readable, every query HTTP 200")

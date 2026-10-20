@@ -9,16 +9,16 @@ WHY THIS SCRIPT EXISTS
   and BEFORE the proxy code that selects the field ships.
 
 WHAT IT DOES
-  Mirrors the FLS of an existing field on the same object, Reasoning_Effort__c,
-  whose 31 FieldPermissions rows are the house pattern on Chatbot_Instruction__c
-  (every field there has the same 31 parents: 29 profiles Read+Edit, and the
-  permission sets LiteLLM_CFO_Bot_Read_Only and sfdc_slack Read-only).
-    - Allowed_Positions__c       -> same Read / Edit as Reasoning_Effort__c
-    - Is_Position_Restricted__c  -> same Read; Edit always false (formula fields
+  READ mirrors an existing field on the same object, Reasoning_Effort__c, whose
+  31 FieldPermissions parents are the house pattern on Chatbot_Instruction__c
+  (29 profiles plus the permission sets LiteLLM_CFO_Bot_Read_Only and
+  sfdc_slack). EDIT is narrower on purpose:
+    - Allowed_Positions__c       -> Read for all 31; Edit ONLY for the System
+                                    Administrator profile. Whoever can edit this
+                                    field can lift a restriction, so a profile
+                                    given object Edit later must not inherit it.
+    - Is_Position_Restricted__c  -> Read for all 31; Edit never (formula fields
                                     are read-only; Salesforce rejects Edit=true)
-  Editing records stays admin-only regardless: object-level Edit on
-  Chatbot_Instruction__c is held only by System Administrator, System Admin
-  Marketing and the Apex_Development permission set.
 
 WHY ROW INSERTS (and not a Profile / PermissionSet metadata deploy)
   A FieldPermissions insert creates exactly one new row per parent per field and
@@ -31,9 +31,11 @@ WHY ROW INSERTS (and not a Profile / PermissionSet metadata deploy)
 SAFETY
   - Default is a DRY RUN: it reads only, prints the plan, and writes nothing.
   - --apply inserts ONLY rows that don't exist yet (existing rows are reported,
-    never changed), then re-reads and checks the two rows that matter:
-      LiteLLM_CFO_Bot_Read_Only: Read on both fields
-      System Administrator:      Read+Edit on Allowed_Positions__c
+    never changed), then re-reads everything on the two fields and EXITS 1 when:
+      any insert failed; any planned row is missing or differs from the plan;
+      any parent other than System Administrator has Edit (existing rows too);
+      LiteLLM_CFO_Bot_Read_Only can't read both fields; or System
+      Administrator lacks Read+Edit on Allowed_Positions__c.
   - No secrets: authentication is the local `sf` CLI's stored org login.
 
 RUN (from this repo's root, AFTER the metadata deploy):
@@ -133,29 +135,47 @@ def build_plan():
                 "SobjectType": OBJ,
                 "Field": field,
                 "PermissionsRead": src["PermissionsRead"],
-                "PermissionsEdit": False if is_formula else src["PermissionsEdit"],
+                "PermissionsEdit": not is_formula and parent_label(src) == f"Profile: {ADMIN_PROFILE}",
                 "_label": parent_label(src),  # stripped before sending
             })
     return source, plan, skipped
 
 
-# ── Step 4: verify the two grants that matter ────────────────────────
-def verify():
+# ── Step 4: re-read and compare against the plan ─────────────────────
+def verify(plan):
+    """Return a list of problems (empty = verified)."""
     rows = fls_rows(NEW_FIELDS)
-    got = {(parent_label(r), r["Field"]): (r["PermissionsRead"], r["PermissionsEdit"]) for r in rows}
+    by_key = {(r["ParentId"], r["Field"]): r for r in rows}
+    by_label = {(parent_label(r), r["Field"]): (r["PermissionsRead"], r["PermissionsEdit"]) for r in rows}
+    problems = []
+
+    # Every planned row exists with exactly the planned Read / Edit.
+    for p in plan:
+        r = by_key.get((p["ParentId"], p["Field"]))
+        got = (r["PermissionsRead"], r["PermissionsEdit"]) if r else None
+        if got != (p["PermissionsRead"], p["PermissionsEdit"]):
+            problems.append(f"{p['_label']} -> {p['Field']}: planned "
+                            f"{(p['PermissionsRead'], p['PermissionsEdit'])}, read back {got}")
+
+    # Nobody but the admin profile may edit (covers rows that pre-existed too).
+    for (label, field), (_, edit) in by_label.items():
+        if edit and (label, field) != (f"Profile: {ADMIN_PROFILE}", f"{OBJ}.Allowed_Positions__c"):
+            problems.append(f"{label} -> {field}: has Edit, only {ADMIN_PROFILE} may")
+
+    # The grants the proxy and admins depend on, printed for the record.
     checks = [
         (f"PermSet: {PROXY_PERMSET}", f"{OBJ}.Allowed_Positions__c", lambda p: p[0]),
         (f"PermSet: {PROXY_PERMSET}", f"{OBJ}.Is_Position_Restricted__c", lambda p: p[0]),
         (f"Profile: {ADMIN_PROFILE}", f"{OBJ}.Allowed_Positions__c", lambda p: p[0] and p[1]),
     ]
-    ok = True
     for parent, field, test in checks:
-        perm = got.get((parent, field))
+        perm = by_label.get((parent, field))
         passed = perm is not None and test(perm)
-        ok &= passed
         print(f"  {'PASS' if passed else 'FAIL'}  {parent} -> {field.split('.')[1]} {perm}")
-    print(f"  rows now on the new fields: {len(rows)} (expected {2 * len(fls_rows([SOURCE_FIELD]))})")
-    return ok
+        if not passed:
+            problems.append(f"{parent} -> {field}: required grant missing ({perm})")
+    print(f"  rows now on the new fields: {len(rows)}")
+    return problems
 
 
 def main():
@@ -176,7 +196,8 @@ def main():
     # The two grants the proxy and admins depend on must be in the plan or already present.
     must = {(f"PermSet: {PROXY_PERMSET}", f) for f in NEW_FIELDS} | {(f"Profile: {ADMIN_PROFILE}", f"{OBJ}.Allowed_Positions__c")}
     covered = {(r["_label"], r["Field"]) for r in plan} | set(skipped)
-    assert must <= covered, f"plan is missing required grants: {must - covered}"
+    if not must <= covered:
+        sys.exit(f"Plan is missing required grants: {must - covered}")
 
     if not APPLY:
         state = "NOT YET DEPLOYED: " + ", ".join(sorted(missing)) if missing else "both fields deployed"
@@ -201,7 +222,10 @@ def main():
         print(f"  FAILED {label} -> {field}: {errors}")
 
     print("\nVerify:")
-    if not verify():
+    problems = verify(plan)
+    for problem in problems:
+        print(f"  PROBLEM {problem}")
+    if failed or problems:
         sys.exit("FLS verification FAILED: do not ship proxy code that selects these fields.")
     print("FLS verified. Next: the read check AS THE PROXY USER before the proxy ships.")
 

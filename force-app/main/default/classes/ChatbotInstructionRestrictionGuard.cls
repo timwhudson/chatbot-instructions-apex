@@ -33,6 +33,16 @@
  *   "without sharing" so the check sees every requiring skill, even one the
  *   editing user could not open. A partial view would let a restriction slip
  *   through.
+ *
+ * RECYCLE BIN (ALL ROWS):
+ *   Both queries include deleted rows still in the Recycle Bin. Undelete does
+ *   not re-run validation rules, so without this an editor could delete the
+ *   requiring skill / its Required_Skill__c row / a legacy linker, restrict
+ *   this skill, then undelete and bring back a requirement on a restricted
+ *   skill. Known limit: rows emptied from the bin keep blocking until
+ *   Salesforce physically purges them, because ALL ROWS still returns them and
+ *   no field tells them apart from rows that can be undeleted. That fails
+ *   closed (a restriction waits; nothing leaks).
  */
 public without sharing class ChatbotInstructionRestrictionGuard {
 
@@ -60,12 +70,13 @@ public without sharing class ChatbotInstructionRestrictionGuard {
         // to go). Sorted by name so the message is stable.
         Map<Id, String> requiredBy = new Map<Id, String>();
 
-        // Store 1: Required_Skill__c junction rows (query #1).
+        // Store 1: Required_Skill__c junction rows (query #1), Recycle Bin included.
         for (Required_Skill__c row : [
             SELECT Required_Instruction__c, Instruction__r.Name
             FROM Required_Skill__c
             WHERE Required_Instruction__c IN :newlyRestricted
             ORDER BY Instruction__r.Name
+            ALL ROWS
         ]) {
             noteFirst(requiredBy, row.Required_Instruction__c, row.Instruction__r.Name);
         }
@@ -80,8 +91,9 @@ public without sharing class ChatbotInstructionRestrictionGuard {
             }
         }
 
-        // Store 2b: legacy lookup on every OTHER record (query #2). Records in
-        // this save are excluded because 2a already judged them by their new value.
+        // Store 2b: legacy lookup on every OTHER record (query #2), Recycle Bin
+        // included. Records in this save are excluded because 2a already judged
+        // them by their new value.
         Set<Id> inThisSave = oldMap.keySet();
         for (Chatbot_Instruction__c rec : [
             SELECT Name, Instruction_Dependency__c
@@ -89,6 +101,7 @@ public without sharing class ChatbotInstructionRestrictionGuard {
             WHERE Instruction_Dependency__c IN :newlyRestricted
               AND Id NOT IN :inThisSave
             ORDER BY Name
+            ALL ROWS
         ]) {
             noteFirst(requiredBy, rec.Instruction_Dependency__c, rec.Name);
         }
@@ -101,7 +114,8 @@ public without sharing class ChatbotInstructionRestrictionGuard {
             if (requirer != null) {
                 rec.addError(
                     'Can\'t restrict this skill: "' + requirer +
-                    '" lists it as a required skill. Remove that requirement first.'
+                    '" (possibly in the Recycle Bin) lists it as a required skill. ' +
+                    'Remove that requirement first.'
                 );
             }
         }

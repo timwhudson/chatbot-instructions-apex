@@ -24,7 +24,17 @@
  *      re-index trigger's sibling updates (its ISCHANGED guard), but DOES fire
  *      when the lookup itself is set.
  *   8. Validation rule Restricted_Skill_Must_Be_Plain_Text refuses restricting an
- *      Always Include record.
+ *      Always Include, a Proxy Injected and a Packaged Skill ID record.
+ *   9. Recycle Bin: a requirement whose requiring skill, Required_Skill__c row
+ *      or legacy linker is deleted (still in the bin) still blocks, because an
+ *      undelete would bring it back without re-running validation rules.
+ *      Known limit: ALL ROWS also returns rows emptied from the bin until
+ *      Salesforce physically purges them (a probe on 2026-10-20 showed emptied
+ *      rows still returned in the same transaction, with no field to tell them
+ *      apart), so a just-emptied requirement keeps blocking for a while. That
+ *      fails closed, and no test can observe the asynchronous purge.
+ *  10. Board Notes' live shape: a skill that ITSELF requires other skills
+ *      (outgoing Required_Skill__c row + legacy link) can be restricted.
  *
  * Test data respects the org's existing validation rules (see commit b0a7018):
  *   Usage_Required (Usage__c when not Always Include / Proxy Injected) and
@@ -236,18 +246,91 @@ private class ChatbotInstructionRestrictionTest {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    //  8. VR Restricted_Skill_Must_Be_Plain_Text
+    //  8. VR Restricted_Skill_Must_Be_Plain_Text: Always Include, Proxy
+    //     Injected and Packaged Skill ID records can't be restricted
     // ══════════════════════════════════════════════════════════════════
     @isTest
     static void restrictedSkillMustBePlainText() {
         Chatbot_Instruction__c alwaysOn = makeSkill('Always On Instruction');
         alwaysOn.Always_Include__c = true;
-        insert alwaysOn;
+        Chatbot_Instruction__c proxyInjected = makeSkill('Proxy Injected Instruction');
+        proxyInjected.Proxy_Injected_Instruction__c = true;
+        Chatbot_Instruction__c packaged = makeSkill('Packaged Skill');
+        packaged.Anthropic_Skill_ID__c = 'skill_test_packaged';
+        List<Chatbot_Instruction__c> skills = new List<Chatbot_Instruction__c>{ alwaysOn, proxyInjected, packaged };
+        insert skills;
 
         Test.startTest();
-        Database.SaveResult result = tryRestrict(alwaysOn.Id);
+        List<Database.SaveResult> results = Database.update(new List<Chatbot_Instruction__c>{
+            new Chatbot_Instruction__c(Id = alwaysOn.Id, Allowed_Positions__c = POSITIONS),
+            new Chatbot_Instruction__c(Id = proxyInjected.Id, Allowed_Positions__c = POSITIONS),
+            new Chatbot_Instruction__c(Id = packaged.Id, Allowed_Positions__c = POSITIONS)
+        }, false);
         Test.stopTest();
 
-        System.assert(firstError(result).startsWith('Only a plain text skill can be restricted'), 'Shape rule should refuse');
+        for (Integer i = 0; i < results.size(); i++) {
+            System.assert(firstError(results[i]).startsWith('Only a plain text skill can be restricted'),
+                'Shape rule should refuse ' + skills[i].Name);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  9. Recycle Bin: deleted requirements still block (undelete would
+    //     restore them without re-running validation rules)
+    // ══════════════════════════════════════════════════════════════════
+    @isTest
+    static void requirementsInRecycleBinStillBlock() {
+        // Path 1: the requiring skill is deleted (its junction row goes with it).
+        // Path 2: only the Required_Skill__c row is deleted.
+        // Path 3: a legacy linker is deleted.
+        Chatbot_Instruction__c target1 = makeSkill('Target One');
+        Chatbot_Instruction__c target2 = makeSkill('Target Two');
+        Chatbot_Instruction__c target3 = makeSkill('Target Three');
+        Chatbot_Instruction__c deletedRequirer = makeSkill('Deleted Requirer');
+        Chatbot_Instruction__c rowOwner = makeSkill('Row Owner');
+        insert new List<Chatbot_Instruction__c>{ target1, target2, target3, deletedRequirer, rowOwner };
+        Required_Skill__c row1 = new Required_Skill__c(Instruction__c = deletedRequirer.Id, Required_Instruction__c = target1.Id);
+        Required_Skill__c row2 = new Required_Skill__c(Instruction__c = rowOwner.Id, Required_Instruction__c = target2.Id);
+        insert new List<Required_Skill__c>{ row1, row2 };
+        Chatbot_Instruction__c deletedLinker = makeSkill('Deleted Linker');
+        deletedLinker.Instruction_Dependency__c = target3.Id;
+        insert deletedLinker;
+        delete new List<SObject>{ deletedRequirer, row2, deletedLinker };
+
+        Test.startTest();
+        List<Database.SaveResult> results = Database.update(new List<Chatbot_Instruction__c>{
+            new Chatbot_Instruction__c(Id = target1.Id, Allowed_Positions__c = POSITIONS),
+            new Chatbot_Instruction__c(Id = target2.Id, Allowed_Positions__c = POSITIONS),
+            new Chatbot_Instruction__c(Id = target3.Id, Allowed_Positions__c = POSITIONS)
+        }, false);
+        Test.stopTest();
+
+        String[] expected = new String[]{ '"Deleted Requirer"', '"Row Owner"', '"Deleted Linker"' };
+        for (Integer i = 0; i < results.size(); i++) {
+            String message = firstError(results[i]);
+            System.assert(message.contains(expected[i]), 'Path ' + (i + 1) + ' should name ' + expected[i] + ': ' + message);
+            System.assert(message.contains('(possibly in the Recycle Bin)'), 'Message should mention the bin: ' + message);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  10. Board Notes' live shape: the restricted skill ITSELF requires
+    //      other skills (outgoing junction row + legacy link) -> saves
+    // ══════════════════════════════════════════════════════════════════
+    @isTest
+    static void restrictingSkillThatRequiresOthersSaves() {
+        Chatbot_Instruction__c junctionDependency = makeSkill('Transcript Framework');
+        Chatbot_Instruction__c legacyDependency = makeSkill('Legacy Dependency');
+        insert new List<Chatbot_Instruction__c>{ junctionDependency, legacyDependency };
+        Chatbot_Instruction__c target = makeSkill('Board Notes Shape');
+        target.Instruction_Dependency__c = legacyDependency.Id;
+        insert target;
+        insert new Required_Skill__c(Instruction__c = target.Id, Required_Instruction__c = junctionDependency.Id);
+
+        Test.startTest();
+        Database.SaveResult result = tryRestrict(target.Id);
+        Test.stopTest();
+
+        System.assert(result.isSuccess(), 'Requiring others must not block restricting: ' + result.getErrors());
     }
 }
