@@ -37,8 +37,10 @@
  *      (outgoing Required_Skill__c row + legacy link) can be restricted.
  *
  * Test data respects the org's existing validation rules (see commit b0a7018):
- *   Usage_Required (Usage__c when not Always Include / Proxy Injected) and
- *   Instruction_Text_Required (Instruction_Text__c always).
+ *   Usage_Required (Usage__c when not Always Include / Proxy Injected),
+ *   Instruction_Text_Required (Instruction_Text__c always) and
+ *   Library_Listing_Rules (Library_Description__c on every active record that is
+ *   not Always Include / Proxy Injected; Active__c defaults to TRUE).
  */
 @isTest
 private class ChatbotInstructionRestrictionTest {
@@ -51,7 +53,8 @@ private class ChatbotInstructionRestrictionTest {
         return new Chatbot_Instruction__c(
             Name = name,
             Usage__c = 'Test usage',
-            Instruction_Text__c = 'Test instruction text'
+            Instruction_Text__c = 'Test instruction text',
+            Library_Description__c = 'Test library description.'
         );
     }
 

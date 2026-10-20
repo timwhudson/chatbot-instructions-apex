@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Skill library launch night (PLAN decisions 72 + 76): the exact set of components.
+  Deploy by THIS manifest, never by source dir.
+  - ValidationRule: Library_Listing_Rules rewritten (active + not always-on + not
+    proxy-injected => Library_Description__c required). Same name = in-place update.
+  - Layout: the live layout retrieved 2026-10-20 minus the Show_In_Library__c item.
+    A Layout deploy REPLACES the live layout wholesale: re-diff against live first.
+  - ApexClass: test data fixed for the new rule + a test that proves the rule.
+  Show_In_Library__c itself is deleted by destructiveChangesPost.xml (after these).
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Chatbot_Instruction__c.Library_Listing_Rules</members>
+        <name>ValidationRule</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c-Chatbot Instruction Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>ChatbotInstructionLibraryRuleTest</members>
+        <members>ChatbotInstructionRestrictionTest</members>
+        <name>ApexClass</name>
+    </types>
+    <version>65.0</version>
+</Package>

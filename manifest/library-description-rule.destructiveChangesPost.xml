@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Runs AFTER package.xml's components: by then the rule and the layout no longer
+  reference the field. Soft delete: Setup > Object Manager > Chatbot Instruction >
+  Fields & Relationships > Deleted Fields can undelete it (values kept) for 15 days.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Chatbot_Instruction__c.Show_In_Library__c</members>
+        <name>CustomField</name>
+    </types>
+    <version>65.0</version>
+</Package>

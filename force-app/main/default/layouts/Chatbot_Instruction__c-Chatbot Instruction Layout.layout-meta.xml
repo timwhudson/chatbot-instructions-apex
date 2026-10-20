@@ -70,10 +70,6 @@
         <layoutColumns>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Show_In_Library__c</field>
-            </layoutItems>
-            <layoutItems>
-                <behavior>Edit</behavior>
                 <field>Allowed_Positions__c</field>
             </layoutItems>
         </layoutColumns>

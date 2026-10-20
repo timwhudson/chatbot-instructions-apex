@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Library_Listing_Rules</fullName>
+    <active>true</active>
+    <description>Skill library (PLAN 72/76, 2026-10-20): every active record that is not Always Include or Proxy Injected is listed, so it needs a Library Description (blank or spaces refused). Replaces the retired Show in Library checkbox.</description>
+    <errorConditionFormula>AND(
+    Active__c,
+    NOT(Always_Include__c),
+    NOT(Proxy_Injected_Instruction__c),
+    ISBLANK(TRIM(Library_Description__c))
+)</errorConditionFormula>
+    <errorDisplayField>Library_Description__c</errorDisplayField>
+    <errorMessage>Every active skill is listed in the Skill Library, so it needs a Library Description: two plain-English sentences on what it produces and what to give it.</errorMessage>
+</ValidationRule>
