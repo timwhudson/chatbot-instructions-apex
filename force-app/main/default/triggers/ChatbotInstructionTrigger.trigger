@@ -14,6 +14,10 @@
  * skill (fill Allowed_Positions__c) while another firm skill requires it.
  * See ChatbotInstructionRestrictionGuard.
  *
+ * Also (skill versioning): before insert/update, stamps Version_Number__c and
+ * Version_Date__c — 1 on insert, +1 only when the instruction text or the
+ * bundle fingerprint really changes. See ChatbotInstructionVersioning.
+ *
  * Delegates all logic to ChatbotInstructionIndexingService and
  * ChatbotInstructionRestrictionGuard to keep the trigger lean and testable.
  */
@@ -29,12 +33,16 @@ trigger ChatbotInstructionTrigger on Chatbot_Instruction__c (
     // ── BEFORE events: assign default/temp Index__c values ──────────
     if (Trigger.isBefore && Trigger.isInsert) {
         ChatbotInstructionIndexingService.handleBeforeInsert(Trigger.new);
+        // Skill versioning: every new record starts at Version 1
+        ChatbotInstructionVersioning.handleBeforeInsert(Trigger.new);
     }
 
     if (Trigger.isBefore && Trigger.isUpdate) {
         ChatbotInstructionIndexingService.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
         // Position-restricted skills: block restricting a skill that is still required
         ChatbotInstructionRestrictionGuard.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
+        // Skill versioning: +1 only on a real text or bundle change
+        ChatbotInstructionVersioning.handleBeforeUpdate(Trigger.new, Trigger.oldMap);
     }
 
     // ── AFTER events: rebuild the full sequence ─────────────────────

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Version_Date__c</fullName>
+    <description>Skill versioning: when the current Version_Number__c took effect. Set only by ChatbotInstructionTrigger, together with the number. Unlike Last Modified Date it does not move on re-ordering, description, Usage, Active or position edits. Records that existed before versioning shipped carry their Last Modified Date at that time (CFO Bot labels it "on record since").</description>
+    <inlineHelpText>Set automatically: when the current version took effect.</inlineHelpText>
+    <externalId>false</externalId>
+    <label>Version Date</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

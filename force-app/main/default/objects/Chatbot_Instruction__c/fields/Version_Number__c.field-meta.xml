@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Version_Number__c</fullName>
+    <description>Skill versioning: this skill's content version, 1, 2, 3… Set only by ChatbotInstructionTrigger (ChatbotInstructionVersioning): a new record starts at 1, and the number rises by one only when Instruction_Text__c or Bundle_Fingerprint__c really changes (line endings and trailing spaces don't count). Re-ordering, descriptions, Usage, Active and positions never change it, and a value sent by an API call, Data Loader or a rollback file is ignored, so the number never goes down. Read by the LiteLLM proxy (skills line, Router_Decision__c versions list) and shown in CFO Bot's Library and skill cards.</description>
+    <inlineHelpText>Set automatically. Rises by one whenever the instructions or the packaged bundle change.</inlineHelpText>
+    <externalId>false</externalId>
+    <label>Version Number</label>
+    <precision>10</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Bundle_Fingerprint__c</fullName>
+    <description>Skill versioning: for a packaged firm skill (Packaged Skill ID = a firm skill store slug), the fingerprint of the bundle that is live in the skill store, copied from CFO Bot's admin Skill store page after each publish (64 lower-case hex characters; the trigger trims and lower-cases a pasted value). A new value raises Version_Number__c. Blank for text skills. CFO Bot never writes it (its Salesforce user is read-only); its admin page flags a record whose fingerprint doesn't match the live bundle.</description>
+    <inlineHelpText>Packaged skills only: paste the fingerprint from CFO Bot's Skill store page after publishing a new bundle.</inlineHelpText>
+    <externalId>false</externalId>
+    <label>Bundle Fingerprint</label>
+    <length>64</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

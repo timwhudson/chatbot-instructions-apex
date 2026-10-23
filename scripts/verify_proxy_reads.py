@@ -1,5 +1,5 @@
 """Read-only check, run AS THE LITELLM PROXY'S SALESFORCE USER, of the fields the
-position-restriction feature reads.
+position-restriction feature reads (and, since skill versioning, the version fields).
 
 WHY: the proxy's integration user only sees fields its profile / permission sets
 grant. A field it can't read either vanishes from describe or makes a SOQL query
@@ -84,6 +84,16 @@ async def main():
     await visible_fields("Chatbot_Instruction__c", ["Allowed_Positions__c", "Is_Position_Restricted__c"])
     print("  SELECT COUNT() FROM Chatbot_Instruction__c WHERE Is_Position_Restricted__c = true")
     await count("SELECT COUNT() FROM Chatbot_Instruction__c WHERE Is_Position_Restricted__c = true")
+
+    # Skill versioning (grant_version_fls.py): the proxy's manifest query selects all
+    # three of the first; an unreadable one would 400 the whole manifest.
+    print("3. Chatbot_Instruction__c (skill versioning fields)")
+    await visible_fields(
+        "Chatbot_Instruction__c",
+        ["Version_Number__c", "Version_Date__c", "Bundle_Fingerprint__c", "Created_From_Skill_ID__c"],
+    )
+    print("  SELECT COUNT() ... WHERE Active__c = true AND Version_Number__c != null (after the backfill = every active record)")
+    await count("SELECT COUNT() FROM Chatbot_Instruction__c WHERE Active__c = true AND Version_Number__c != null")
 
 
 if __name__ == "__main__":

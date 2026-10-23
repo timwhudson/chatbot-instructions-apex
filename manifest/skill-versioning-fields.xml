@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Skill versioning, step 1 of 3 (plan skill-versioning-2026-10-23 §5.2 "Deploy order"):
+  the four fields + the format validation rule ONLY. No Apex, no trigger change, no layout.
+    1. this manifest → then scripts/grant_version_fls.py --apply → scripts/verify_proxy_reads.py (proxy user reads all four)
+    2. the backfill (scripts/backfill_versions.py) stamps every record: v1, Version_Date = Last Modified Date, fingerprints
+    3. manifest/skill-versioning-trigger.xml (the class, its test, the trigger) — only after the backfill, so the
+       backfill's fingerprint writes don't count as changes
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Chatbot_Instruction__c.Version_Number__c</members>
+        <members>Chatbot_Instruction__c.Version_Date__c</members>
+        <members>Chatbot_Instruction__c.Bundle_Fingerprint__c</members>
+        <members>Chatbot_Instruction__c.Created_From_Skill_ID__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c.Bundle_Fingerprint_Format</members>
+        <name>ValidationRule</name>
+    </types>
+    <version>65.0</version>
+</Package>
