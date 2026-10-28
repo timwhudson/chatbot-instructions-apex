@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Instruction_Dependency__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>If a Chatbot Instruction record is populated in this field, it will be automatically loaded anytime the current record is loaded.</description>
+    <inlineHelpText>Retired: the older one-link version of Required Skills. No record uses it (the last 2 links were cleared 2026-10-28). Put links on the Required Skills related list instead. CFO Bot still honours a value here.</inlineHelpText>
+    <label>Instruction Dependency</label>
+    <referenceTo>Chatbot_Instruction__c</referenceTo>
+    <relationshipLabel>Chatbot Instructions</relationshipLabel>
+    <relationshipName>Chatbot_Instructions</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

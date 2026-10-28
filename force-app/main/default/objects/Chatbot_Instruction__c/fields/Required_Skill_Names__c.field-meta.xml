@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Required_Skill_Names__c</fullName>
+    <description>Names of the skills on this record&apos;s Required Skills related list (Required_Skill__c rows), A to Z, comma-separated: the skills CFO Bot always loads together with this one. Filled automatically by Apex (ChatbotInstructionRequiredSkills) whenever a row is added, changed or removed, or a required skill is renamed; nobody can edit it. Blank = no required skills. CFO Bot reads the related list itself, not this field.</description>
+    <inlineHelpText>The skills that always load with this one, from the Required Skills list below. Updates itself: to change it, add or remove rows in that list.</inlineHelpText>
+    <externalId>false</externalId>
+    <label>Required Skills</label>
+    <length>255</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

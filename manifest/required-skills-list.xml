@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  "Required Skills" text field on Chatbot_Instruction__c (2026-10-28, Tim): Required_Skill_Names__c lists the names
+  on the Required Skills related list, kept current by Apex (a formula can't read child rows).
+    1. validate this manifest, RunSpecifiedTests with every ChatbotInstruction* test class, then quick-deploy
+       (re-diff the Layout against live first: a Layout deploy replaces the whole live layout)
+    2. python3 scripts/grant_required_skills_fls.py [-apply]  (Read like Reasoning_Effort__c, Edit for nobody)
+    3. backfill: anonymous Apex
+         ChatbotInstructionRequiredSkills.refresh(new Map<Id, Chatbot_Instruction__c>([SELECT Id FROM Chatbot_Instruction__c]).keySet());
+  Also in this package: help text on the retired Instruction_Dependency__c and the Required_Skill__c object
+  description (the last 2 legacy links were cleared the same day; both files are the live versions + that edit).
+  The proxy never selects Required_Skill_Names__c, so no proxy change and no proxy-read check.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>ChatbotInstructionRequiredSkills</members>
+        <members>ChatbotInstructionRequiredSkillsTest</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>ChatbotInstructionTrigger</members>
+        <members>RequiredSkillTrigger</members>
+        <name>ApexTrigger</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c.Required_Skill_Names__c</members>
+        <members>Chatbot_Instruction__c.Instruction_Dependency__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Required_Skill__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c-Chatbot Instruction Layout</members>
+        <name>Layout</name>
+    </types>
+    <version>65.0</version>
+</Package>
