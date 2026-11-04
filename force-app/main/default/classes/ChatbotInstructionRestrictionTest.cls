@@ -24,7 +24,8 @@
  *      re-index trigger's sibling updates (its ISCHANGED guard), but DOES fire
  *      when the lookup itself is set.
  *   8. Validation rule Restricted_Skill_Must_Be_Plain_Text refuses restricting an
- *      Always Include, a Proxy Injected and a Packaged Skill ID record.
+ *      Always Include and a Proxy Injected record, and lets a packaged skill
+ *      (Packaged Skill ID) be restricted (litellm P355 / cfo-sandbox-mcp cfo/071).
  *   9. Recycle Bin: a requirement whose requiring skill, Required_Skill__c row
  *      or legacy linker is deleted (still in the bin) still blocks, because an
  *      undelete would bring it back without re-running validation rules.
@@ -46,7 +47,7 @@
 private class ChatbotInstructionRestrictionTest {
 
     // Two real TCCFO_Positions values (the field is a restricted picklist).
-    private static final String POSITIONS = 'Accounting Manager;Partner';
+    private static final String POSITIONS = 'Accounting Manager;CEO';
 
     // ── Helper: an ordinary text skill that passes the org's rules ──
     private static Chatbot_Instruction__c makeSkill(String name) {
@@ -249,8 +250,8 @@ private class ChatbotInstructionRestrictionTest {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    //  8. VR Restricted_Skill_Must_Be_Plain_Text: Always Include, Proxy
-    //     Injected and Packaged Skill ID records can't be restricted
+    //  8. VR Restricted_Skill_Must_Be_Plain_Text: Always Include and Proxy
+    //     Injected records can't be restricted; a packaged skill can
     // ══════════════════════════════════════════════════════════════════
     @isTest
     static void restrictedSkillMustBePlainText() {
@@ -259,7 +260,7 @@ private class ChatbotInstructionRestrictionTest {
         Chatbot_Instruction__c proxyInjected = makeSkill('Proxy Injected Instruction');
         proxyInjected.Proxy_Injected_Instruction__c = true;
         Chatbot_Instruction__c packaged = makeSkill('Packaged Skill');
-        packaged.Anthropic_Skill_ID__c = 'skill_test_packaged';
+        packaged.Anthropic_Skill_ID__c = 'test-packaged-skill';
         List<Chatbot_Instruction__c> skills = new List<Chatbot_Instruction__c>{ alwaysOn, proxyInjected, packaged };
         insert skills;
 
@@ -271,10 +272,13 @@ private class ChatbotInstructionRestrictionTest {
         }, false);
         Test.stopTest();
 
-        for (Integer i = 0; i < results.size(); i++) {
-            System.assert(firstError(results[i]).startsWith('Only a plain text skill can be restricted'),
+        for (Integer i = 0; i < 2; i++) {
+            System.assert(firstError(results[i]).startsWith('Always Include and Proxy Injected skills load for everyone'),
                 'Shape rule should refuse ' + skills[i].Name);
         }
+        System.assert(results[2].isSuccess(), 'A packaged skill can be restricted: ' + results[2].getErrors());
+        System.assertEquals(POSITIONS,
+            [SELECT Allowed_Positions__c FROM Chatbot_Instruction__c WHERE Id = :packaged.Id].Allowed_Positions__c);
     }
 
     // ══════════════════════════════════════════════════════════════════

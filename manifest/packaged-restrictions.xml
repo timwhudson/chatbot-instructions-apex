@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Packaged skills may be position-restricted (2026-11-04; pairs with litellm P355,
+  librechat P483, cfo-sandbox-mcp cfo/071): the shape rule stops refusing a Packaged
+  Skill ID, the field's description and help text say so, and the test proves both.
+  Deploy by THIS manifest with RunSpecifiedTests ChatbotInstructionRestrictionTest.
+  The field and the test class were re-based on the live copies retrieved 2026-11-04
+  (live had a newer help text and the test's positions already changed Partner -> CEO).
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Chatbot_Instruction__c.Allowed_Positions__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Chatbot_Instruction__c.Restricted_Skill_Must_Be_Plain_Text</members>
+        <name>ValidationRule</name>
+    </types>
+    <types>
+        <members>ChatbotInstructionRestrictionTest</members>
+        <name>ApexClass</name>
+    </types>
+    <version>65.0</version>
+</Package>
