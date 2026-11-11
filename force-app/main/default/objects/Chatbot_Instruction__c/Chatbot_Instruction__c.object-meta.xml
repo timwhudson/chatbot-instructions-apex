@@ -153,12 +153,12 @@
     <enableSharing>true</enableSharing>
     <enableStreamingApi>true</enableStreamingApi>
     <externalSharingModel>ReadWrite</externalSharingModel>
-    <label>Chatbot Instruction</label>
+    <label>CFO Bot Skill</label>
     <nameField>
-        <label>Chatbot Instruction Name</label>
+        <label>CFO Bot Skill Name</label>
         <type>Text</type>
     </nameField>
-    <pluralLabel>Chatbot Instructions</pluralLabel>
+    <pluralLabel>CFO Bot Skills</pluralLabel>
     <searchLayouts>
         <searchResultsAdditionalFields>Index__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Active__c</searchResultsAdditionalFields>
