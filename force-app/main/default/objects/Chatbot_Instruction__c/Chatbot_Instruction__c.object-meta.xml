@@ -155,7 +155,7 @@
     <externalSharingModel>ReadWrite</externalSharingModel>
     <label>CFO Bot Skill</label>
     <nameField>
-        <label>CFO Bot Skill Name</label>
+        <label>Skill Name</label>
         <type>Text</type>
     </nameField>
     <pluralLabel>CFO Bot Skills</pluralLabel>
