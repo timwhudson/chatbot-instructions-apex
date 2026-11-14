@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Training_Resource__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The Learning Portal training (Training Resource) that walks through this skill, usually its video walkthrough. CFO Bot shows it on the skill's Skills page (Training row) and, when asked, in skill search results, through the Training Link formula. Set it whenever the training is published, at launch or later. Blank = no training. Added 2026-11-13 (Claude Code/skill-training-link-2026-11-13).</description>
+    <inlineHelpText>The Learning Portal training that walks through this skill. CFO Bot links to it from the skill's Skills page.</inlineHelpText>
+    <externalId>false</externalId>
+    <label>Training Resource</label>
+    <referenceTo>Vector_File__c</referenceTo>
+    <relationshipLabel>CFO Bot Skills</relationshipLabel>
+    <relationshipName>CFO_Bot_Skills</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

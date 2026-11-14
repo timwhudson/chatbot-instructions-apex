@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Training_Link__c</fullName>
+    <description>What CFO Bot reads (never the lookup itself): a markdown link, [training name](learning portal page), to the Training Resource, or blank. Blank unless EVERY employee can open the training from a link, the Learning Portal's own rule (tccfo-lms canOpen): not Restrict from Knowledge Base, in CFO Bot's knowledge base (File ID set) and in a numbered training section. So a restricted training's name never reaches staff who can't open it. A cross-object formula, so the proxy's integration user needs no access to Training Resources.</description>
+    <inlineHelpText>What CFO Bot shows. Blank when the training is restricted or not yet in a numbered Learning Portal section.</inlineHelpText>
+    <externalId>false</externalId>
+    <formula>IF(
+  AND(
+    NOT(ISBLANK(Training_Resource__c)),
+    NOT(Training_Resource__r.Restrict_From_Knowledge_Base__c),
+    NOT(ISBLANK(Training_Resource__r.File_ID__c)),
+    NOT(ISBLANK(Training_Resource__r.Training_Section__r.Display_Number__c))
+  ),
+  "[" &amp; Training_Resource__r.Name &amp; "](https://tccfo-lms.web.app/training/" &amp; CASESAFEID(Training_Resource__c) &amp; ")",
+  ""
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Training Link</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

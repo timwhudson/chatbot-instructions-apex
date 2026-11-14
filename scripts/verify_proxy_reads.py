@@ -96,6 +96,28 @@ async def main():
     await count("SELECT COUNT() FROM Chatbot_Instruction__c WHERE Active__c = true AND Version_Number__c != null")
 
 
+    # Skill training link (2026-11-13): the library query selects ONLY Training_Link__c, a
+    # CROSS-OBJECT formula over Vector_File__c, which this user has NO access to. Salesforce
+    # hides the lookup Training_Resource__c from such a user (expected: it reads "absent"
+    # and is never selected), but the formula still evaluates for it. This proves the
+    # formula's values come through (counts only, never a value).
+    print("4. Chatbot_Instruction__c (training link formula)")
+    await visible_fields("Chatbot_Instruction__c", ["Training_Link__c"])
+    soql = "SELECT Training_Link__c FROM Chatbot_Instruction__c WHERE Active__c = true AND Training_Link__c != null"
+    response = await _authed_request("GET", f"{BASE}/query/?{urllib.parse.urlencode({'q': soql})}")
+    if response.status_code != 200:
+        print(f"  HTTP {response.status_code}: {response.text[:160]}")
+        FAILURES.append(f"training query HTTP {response.status_code}")
+        return
+    rows = response.json().get("records", [])
+    lms = [r for r in rows if "](https://tccfo-lms.web.app/training/" in (r.get("Training_Link__c") or "")]
+    print(f"  HTTP 200, active records with a training link = {len(rows)}, learning portal links = {len(lms)}")
+    expected = int(os.environ.get("EXPECT_TRAINING_LINKS", "0") or 0)
+    if expected and len(rows) != expected:
+        FAILURES.append(f"expected {expected} training links, read {len(rows)} (cross-object formula not visible?)")
+    if len(lms) != len(rows):
+        FAILURES.append("a Training_Link__c value is not a learning portal link")
+
 if __name__ == "__main__":
     asyncio.run(main())
     if FAILURES:
